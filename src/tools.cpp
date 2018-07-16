@@ -14,10 +14,10 @@ Tools::~Tools() {}
 VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
                               const vector<VectorXd> &ground_truth) {
   /**
-    * Calculate the RMSE here.
-  */
+   * Calculate the RMSE here.
+   */
   VectorXd rmse(4);
-	rmse << 0,0,0,0;
+  rmse << 0,0,0,0;
 
   // check the validity of the following inputs:
   //  * the estimation vector size should not be zero
@@ -62,7 +62,7 @@ MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
           py * (vx * py - vy * px) / pow(mag_sqrt, 3),
           px * (vy * px - vx * py) / pow(mag_sqrt, 3),
           px / mag_sqrt, py / mag_sqrt;
-	}
+  }
 
-	return Hj;
+  return Hj;
 }
