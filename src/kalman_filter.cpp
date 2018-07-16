@@ -1,9 +1,12 @@
 #include "kalman_filter.h"
+#include <iostream>
+#include <math.h>
 
+using namespace std;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 
-// Please note that the Eigen library does not initialize 
+// Please note that the Eigen library does not initialize
 // VectorXd or MatrixXd objects with zeros upon creation.
 
 KalmanFilter::KalmanFilter() {}
@@ -22,21 +25,66 @@ void KalmanFilter::Init(VectorXd &x_in, MatrixXd &P_in, MatrixXd &F_in,
 
 void KalmanFilter::Predict() {
   /**
-  TODO:
     * predict the state
   */
+  x_ = F_ * x_;
+  MatrixXd Ft = F_.transpose();
+  P_ = F_ * P_ * Ft + Q_;
+
 }
 
 void KalmanFilter::Update(const VectorXd &z) {
   /**
-  TODO:
     * update the state by using Kalman Filter equations
   */
+  VectorXd z_pred = H_ * x_;
+  VectorXd y = z - z_pred;
+  UpdateCommon(y);
 }
 
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
   /**
-  TODO:
     * update the state by using Extended Kalman Filter equations
   */
+  float px = x_(0);
+  float py = x_(1);
+  float vx = x_(2);
+  float vy = x_(3);
+  float rho, phi;
+  rho = sqrt(px * px + py * py);
+  // Calculate phi
+  if (rho != 0) {
+    // Avoid division by zero
+    if (px != 0) {
+      phi = atan2(py, px);
+    }
+    else {
+      phi = M_PI / 2;
+      if (py < 0) {
+        phi *= -1;
+      }
+    }
+    // Normalize phi
+    phi = fmod(phi, 2 * M_PI);
+    VectorXd h = VectorXd(3);
+    h << rho, phi, (px * vx + py * vy) / rho;
+    VectorXd y = z - h;
+    // Normalize phi diff
+    y(1) = fmod(y(1), 2 * M_PI);
+    UpdateCommon(y);
+  }
+}
+
+void KalmanFilter::UpdateCommon(const VectorXd &y) {
+  MatrixXd Ht = H_.transpose();
+  MatrixXd S = H_ * P_ * Ht + R_;
+  MatrixXd Si = S.inverse();
+  MatrixXd PHt = P_ * Ht;
+  MatrixXd K = PHt * Si;
+
+  //new estimate
+  x_ = x_ + (K * y);
+  long x_size = x_.size();
+  MatrixXd I = MatrixXd::Identity(x_size, x_size);
+  P_ = (I - K * H_) * P_;
 }
